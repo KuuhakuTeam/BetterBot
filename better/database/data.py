@@ -10,27 +10,34 @@ import requests
 
 from bs4 import BeautifulSoup
 
-from pyrogram.errors import ChatIdInvalid, ChatWriteForbidden, ChannelInvalid
+from pyrogram.errors import ChatIdInvalid, ChatWriteForbidden, ChannelInvalid, UserIsBlocked
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from pyrogram.enums import ChatType
 
 from better import Better
 from better.config import GP_LOGS
 from better.database import db
 
 
-animes = db["ANIMES"]
+animes = db["CHATS"]
 
 
-async def find_gp(gid: int):
+async def find_chat(gid: int):
     if await animes.find_one({"chat_id": gid}):
         return True
 
 
-async def add_gp(m):
-    user = f"<a href='tg://user?id={m.from_user.id}'>{m.from_user.first_name}</a>"
-    user_start = f"#Better #New_Group\n\n<b>Group</b>: {m.chat.title}\n<b>ID:</b> {m.chat.id}\n<b>User:</b> {user}"
-    await Better.send_message(GP_LOGS, user_start)
-    await animes.insert_one({"chat_id": m.chat.id})
+async def add_to_db(m):
+    if m.chat.type == ChatType.PRIVATE:
+        user = await Better.get_users(m.from_user.id)
+        msg = f"#Better #New_User\n\n<b>User:</b> {user.mention}\n<b>ID:</b> {user.id}"
+        type = "user"
+    elif m.chat.type == ChatType.SUPERGROUP or ChatType.GROUP:
+        x = await Better.get_chat(m.chat.id)
+        msg = f"#Better #New_Group\n\n<b>Group</b>: {x.title}\n<b>ID:</b> {x.id}"
+        type = "group"
+    await animes.update_one({"chat_id": m.chat.id}, {"$set": {"type": type}}, upsert=True)
+    await Better.send_message(GP_LOGS, msg)
 
 
 async def find_ep(gid: int, string: str):
@@ -52,7 +59,7 @@ async def add_ep(gid: int, string: str):
     )
 
 
-async def rm_gp(gid: int):
+async def rm_chat(gid: int):
     await animes.delete_one({"chat_id": gid})
 
 
@@ -75,6 +82,18 @@ def parse_str():
     title = x.find("summary")
     link = x.find("link")["href"]
     return link, title.contents[1]
+
+
+def parse_latest():
+    req = requests.get("https://betteranime.net/lancamentos-rss")
+    sp = BeautifulSoup(req.content, "html.parser")
+    x = sp.find_all("entry", limit=5)
+    msg = "<b>Ultimos animes adicionados:</b>\n\n"
+    for anim in x:
+        title = anim.find("summary")
+        link = anim.find("link")["href"]
+        msg += f'• <i><a href="{link}">{title.contents[1]}</a></i>\n'
+    return msg
 
 
 async def scheduling():
@@ -102,8 +121,8 @@ async def scheduling():
                     )
                     msg = f"<b>Novos episodios adicionados:</b>\n\n<i>✨ {string}</i>"
                     await Better.send_photo(chat_id=gid, photo=img, caption=msg, reply_markup=keyboard)
-                except (ChatIdInvalid, ChatWriteForbidden, ChannelInvalid):
-                    await rm_gp(gid)
+                except (ChatIdInvalid, ChatWriteForbidden, ChannelInvalid, UserIsBlocked):
+                    await rm_chat(gid)
                     pass
                 except Exception:
                     pass

@@ -10,11 +10,20 @@ from pyrogram.enums import ChatType
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 
 from better import Better
-from better.database.data import find_gp, add_gp, rm_gp
+from better.config import VERSION
+from better.database.data import find_chat, add_to_db, rm_chat, parse_latest
+
+
+@Better.on_message(filters.command("latest"))
+async def latest_animes(_, message):
+    msg = parse_latest()
+    await message.reply(msg)
 
 
 @Better.on_message(filters.command(["start", "help"]))
-async def spam(_, message):
+async def start_(_, message):
+    if not await find_chat(message.chat.id):
+        await add_to_db(message)
     me = await Better.get_users("me")
     keyboard = InlineKeyboardMarkup(
         [
@@ -26,7 +35,24 @@ async def spam(_, message):
         ]
     )
     if message.chat.type == ChatType.PRIVATE:
-        await message.reply("Olá, sou apenas um bot que notifica quando um episodio é adicionado ao site BetterAnime.net. Me adicione á um grupo e eu enviarei os novos animes.", reply_markup=keyboard)
+        await message.reply("Olá, sou apenas um bot que notifica quando um episodio é adicionado ao site BetterAnime.net. Eu te avisarei aqui quando novos animes forem adicionados e você tambem pode me adicionar á um grupo se desejar.", reply_markup=keyboard)
+    else:
+        return
+
+
+@Better.on_message(filters.command(["about", "repo"]))
+async def about_(_, message):
+    keyboard = InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    text="Repositorio", url="https://github.com/KuuhakuTeam/BetterBot",
+                ),
+            ],
+        ]
+    )
+    if message.chat.type == ChatType.PRIVATE:
+        await message.reply_photo(photo="https://telegra.ph/file/a6b8f14854ada59ad1e8e.jpg", caption=f"<b>Versão: {VERSION}</b>", reply_markup=keyboard)
     else:
         return
 
@@ -35,25 +61,24 @@ async def spam(_, message):
 async def thanks_for(c: Better, m: Message):
     gid = m.chat.id
     if c.me.id in [x.id for x in m.new_chat_members]:
-        if await find_gp(gid):
+        if await find_chat(gid):
             return
         else:
-            await add_gp(m)
+            await add_to_db(m)
 
 
 @Better.on_message(filters.left_chat_member)
 async def left_chat_(c: Better, m: Message):
     gid = m.chat.id
     if c.me.id == m.left_chat_member.id:
-        if await find_gp(gid):
-            await rm_gp(gid)
+        if await find_chat(gid):
+            await rm_chat(gid)
         else:
             return
 
 
 @Better.on_message()
 async def thanks_for(_, m: Message):
-    if not m.chat.type == ChatType.GROUP or ChatType.SUPERGROUP:
-        return
-    if not await find_gp(m.chat.id):
-        await add_gp(m)
+    if m.chat.type == ChatType.GROUP or ChatType.SUPERGROUP or ChatType.PRIVATE:
+        if not await find_chat(m.chat.id):
+            await add_to_db(m)
