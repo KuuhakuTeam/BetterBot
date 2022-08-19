@@ -31,6 +31,8 @@ async def add_to_db(m):
     if m.chat.type == ChatType.PRIVATE:
         user = await Better.get_users(m.from_user.id)
         msg = f"#Better #New_User\n\n<b>User:</b> {user.mention}\n<b>ID:</b> {user.id}"
+        if user.username:
+            msg += f"\n<b>Username:</b> {user.username}"
         type = "user"
     elif m.chat.type == ChatType.SUPERGROUP or ChatType.GROUP:
         x = await Better.get_chat(m.chat.id)
@@ -87,7 +89,7 @@ def parse_str():
 def parse_latest():
     req = requests.get("https://betteranime.net/lancamentos-rss")
     sp = BeautifulSoup(req.content, "html.parser")
-    x = sp.find_all("entry", limit=5)
+    x = sp.find_all("entry", limit=15)
     msg = "<b>Ultimos animes adicionados:</b>\n\n"
     for anim in x:
         title = anim.find("summary")

@@ -6,9 +6,9 @@
 # <https://www.github.com/KuuhakuTeam/BetterBot/blob/master/LICENSE/>.
 
 import asyncio
-import logging
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from pymongo.errors import ConnectionFailure
 
 from better import Better, db_core
 from better.config import *
@@ -25,25 +25,26 @@ async def db_connect():
     try:
         print("Conectando ao MongoDB")
         await db_core.server_info()
-    except BaseException as e:
+    except (BaseException, ConnectionFailure) as e:
         print("Falha ao conectar a database, saindo....")
         print(str(e))
         quit(1)
 
 
 async def run_better():
+    """Start Bot"""
     try:
         await Better.start()
     except Exception as e:
         print(e)
     await Better.send_message(chat_id=GP_LOGS, text="Bot iniciado")
-    print("Bot iniciado com suceso ...")
+    print("\n[ SCHEDULE ] Bot iniciado com suceso ...\n")
     
 
 async def main():
+    await db_connect()
     await run_better()
-    print("[ SCHEDULE ] inicando automação.")
-    scheduler.add_job(scheduling, "interval", minutes=2, id='betterbot')
+    scheduler.add_job(scheduling, "interval", minutes=1, id='betterbot')
     scheduler.start()
     await idle()
 

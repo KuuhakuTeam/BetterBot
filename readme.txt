@@ -1,1 +1,0 @@
-Just BetterAnime Scheduling Bot

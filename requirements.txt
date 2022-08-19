@@ -1,0 +1,6 @@
+apscheduler
+pyrogram
+python-dotenv
+requests
+pymongo
+dnspython
