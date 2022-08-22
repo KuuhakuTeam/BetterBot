@@ -99,6 +99,24 @@ def parse_latest():
     return msg
 
 
+def parse_random():
+    template = """
+<b>{}</b>
+
+<b>Gêneros:</b> {}
+
+<code>{}</code>
+    """
+    rand_anime = requests.get("https://betteranime.net/random").url
+    req = requests.get(rand_anime).content
+    page = BeautifulSoup(req, "html.parser").find("main", class_="container d-flex my-5")
+    title = page.find("h2", class_="pt-5").text
+    sinopse = page.find("div", class_="anime-description").text
+    genres = " ".join(map(str, page.find("div", class_="anime-genres").text.split()))
+    img = "https:" + page.find("img")["src"]
+    return rand_anime, template.format(title, genres, sinopse), img
+
+
 def time_formatter(seconds: float) -> str:
     """time formating"""
     minutes, seconds = divmod(int(seconds), 60)

@@ -13,7 +13,22 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 
 from better import Better
 from better.config import TRIGGER, VERSION
-from better.database.data import find_chat, add_to_db, rm_chat, parse_latest, uptime
+from better.database.data import find_chat, add_to_db, rm_chat, parse_latest, uptime, parse_random
+
+
+@Better.on_message(filters.command("random", TRIGGER))
+async def about_(_, message):
+    link, msg, img = parse_random()
+    keyboard = InlineKeyboardMarkup(
+        [
+            [
+                InlineKeyboardButton(
+                    text="Ver no site", url=link,
+                ),
+            ],
+        ]
+    )
+    await message.reply_photo(photo=img, caption=msg, reply_markup=keyboard)
 
 
 @Better.on_message(filters.command("ping", TRIGGER))
