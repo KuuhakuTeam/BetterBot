@@ -113,6 +113,8 @@ def parse_random():
     title = page.find("h2", class_="pt-5").text
     sinopse = page.find("div", class_="anime-description").text
     genres = " ".join(map(str, page.find("div", class_="anime-genres").text.split()))
+    if len(sinopse) > 1000:
+        sinopse = sinopse[:1000] + " ..."
     img = "https:" + page.find("img")["src"]
     return rand_anime, template.format(title, genres, sinopse), img
 
