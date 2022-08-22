@@ -5,22 +5,33 @@
 # PLease read the GNU v3.0 License Agreement in 
 # <https://www.github.com/KuuhakuTeam/BetterBot/blob/master/LICENSE/>.
 
+from datetime import datetime
+
 from pyrogram import filters
 from pyrogram.enums import ChatType
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 
 from better import Better
-from better.config import VERSION
-from better.database.data import find_chat, add_to_db, rm_chat, parse_latest
+from better.config import TRIGGER, VERSION
+from better.database.data import find_chat, add_to_db, rm_chat, parse_latest, uptime
 
 
-@Better.on_message(filters.command("latest"))
+@Better.on_message(filters.command("ping", TRIGGER))
+async def ping_(_, message):
+    start = datetime.now()
+    replied = await message.reply("pong!")
+    end = datetime.now()
+    m_s = (end - start).microseconds / 1000
+    await replied.edit(f"ping: `{m_s}𝚖𝚜`\nuptime: `{uptime()}`")
+
+
+@Better.on_message(filters.command("latest", TRIGGER))
 async def latest_animes(_, message):
     msg = parse_latest()
     await message.reply(msg)
 
 
-@Better.on_message(filters.command(["start", "help"]))
+@Better.on_message(filters.command(["start", "help"], TRIGGER))
 async def start_(_, message):
     if not await find_chat(message.chat.id):
         await add_to_db(message)
@@ -40,7 +51,7 @@ async def start_(_, message):
         return
 
 
-@Better.on_message(filters.command(["about", "repo"]))
+@Better.on_message(filters.command(["about", "repo"], TRIGGER))
 async def about_(_, message):
     keyboard = InlineKeyboardMarkup(
         [

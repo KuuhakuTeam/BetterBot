@@ -5,6 +5,7 @@
 # PLease read the GNU v3.0 License Agreement in
 # <https://www.github.com/KuuhakuTeam/BetterBot/blob/master/LICENSE/>.
 
+import time
 import asyncio
 import requests
 
@@ -14,7 +15,7 @@ from pyrogram.errors import ChatIdInvalid, ChatWriteForbidden, ChannelInvalid, U
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.enums import ChatType
 
-from better import Better
+from better import Better, start_time
 from better.config import GP_LOGS
 from better.database import db
 
@@ -67,7 +68,7 @@ async def rm_chat(gid: int):
 
 def get_img(link):
     req = requests.get(link)
-    sp = BeautifulSoup(req.content, "lxml")
+    sp = BeautifulSoup(req.content, "xml")
     all_div = sp.find("div", class_="anime-title")
     get_ref = all_div.find("a")
     req2 = requests.get(get_ref["href"])
@@ -79,7 +80,7 @@ def get_img(link):
 
 def parse_str():
     req = requests.get("https://betteranime.net/lancamentos-rss")
-    sp = BeautifulSoup(req.content, "html.parser")
+    sp = BeautifulSoup(req.content, "xml")
     x = sp.find("entry")
     title = x.find("summary")
     link = x.find("link")["href"]
@@ -88,7 +89,7 @@ def parse_str():
 
 def parse_latest():
     req = requests.get("https://betteranime.net/lancamentos-rss")
-    sp = BeautifulSoup(req.content, "html.parser")
+    sp = BeautifulSoup(req.content, "xml")
     x = sp.find_all("entry", limit=15)
     msg = "<b>Ultimos animes adicionados:</b>\n\n"
     for anim in x:
@@ -96,6 +97,24 @@ def parse_latest():
         link = anim.find("link")["href"]
         msg += f'• <i><a href="{link}">{title.contents[1]}</a></i>\n'
     return msg
+
+
+def time_formatter(seconds: float) -> str:
+    """time formating"""
+    minutes, seconds = divmod(int(seconds), 60)
+    hours, minutes = divmod(minutes, 60)
+    days, hours = divmod(hours, 24)
+    tmp = (
+        ((str(days) + "d, ") if days else "")
+        + ((str(hours) + "h, ") if hours else "")
+        + ((str(minutes) + "m, ") if minutes else "")
+        + ((str(seconds) + "s, ") if seconds else "")
+    )
+    return tmp[:-2]
+
+
+def uptime():
+    return time_formatter(time.time() - start_time)
 
 
 async def scheduling():

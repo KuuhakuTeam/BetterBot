@@ -5,6 +5,7 @@
 # PLease read the GNU v3.0 License Agreement in 
 # <https://www.github.com/KuuhakuTeam/BetterBot/blob/master/LICENSE/>.
 
+import time
 import asyncio
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -18,13 +19,14 @@ from pyrogram import idle
 
 
 scheduler = AsyncIOScheduler()
-
+start_time = time.time()
 
 async def db_connect():
     """Check Mongo Client"""
     try:
         print("Conectando ao MongoDB")
         await db_core.server_info()
+        print("Database conectada")
     except (BaseException, ConnectionFailure) as e:
         print("Falha ao conectar a database, saindo....")
         print(str(e))

@@ -16,4 +16,5 @@ API_HASH = os.environ.get("API_HASH")
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 GP_LOGS = int(os.environ.get("GP_LOGS"))
 DATABASE_URL = os.environ.get("DATABASE_URL")
+TRIGGER = os.environ.get("TRIGGER", "/ ! . :".split())
 VERSION = "v1.0.1"
