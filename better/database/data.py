@@ -104,7 +104,6 @@ def parse_random():
 <b>{}</b>
 
 <b>Gêneros:</b> {}
-
 <code>{}</code>
     """
     rand_anime = requests.get("https://betteranime.net/random").url
