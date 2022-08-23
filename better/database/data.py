@@ -24,11 +24,13 @@ animes = db["CHATS"]
 
 
 async def find_chat(gid: int):
+    """verify chat in db"""
     if await animes.find_one({"chat_id": gid}):
         return True
 
 
 async def add_to_db(m):
+    """add chat to db"""
     if m.chat.type == ChatType.PRIVATE:
         user = await Better.get_users(m.from_user.id)
         msg = f"#Better #New_User\n\n<b>User:</b> {user.mention}\n<b>ID:</b> {user.id}"
@@ -44,6 +46,7 @@ async def add_to_db(m):
 
 
 async def find_ep(gid: int, string: str):
+    """verify episode in chat db"""
     x = await animes.find_one({"chat_id": gid})
     if x:
         try:
@@ -57,16 +60,19 @@ async def find_ep(gid: int, string: str):
 
 
 async def add_ep(gid: int, string: str):
+    """add ep to chat db"""
     await animes.update_one(
         {"chat_id": gid}, {"$set": {"string": string}}, upsert=True
     )
 
 
 async def rm_chat(gid: int):
+    """remove chat to db"""
     await animes.delete_one({"chat_id": gid})
 
 
 def get_img(link):
+    """get image from anime"""
     req = requests.get(link)
     sp = BeautifulSoup(req.content, "lxml")
     all_div = sp.find("div", class_="anime-title")
@@ -79,6 +85,7 @@ def get_img(link):
 
 
 def parse_str():
+    """get latest anime"""
     req = requests.get("https://betteranime.net/lancamentos-rss")
     sp = BeautifulSoup(req.content, "html.parser")
     x = sp.find("entry")
@@ -88,6 +95,7 @@ def parse_str():
 
 
 def parse_latest():
+    """get latest 15 animes"""
     req = requests.get("https://betteranime.net/lancamentos-rss")
     sp = BeautifulSoup(req.content, "html.parser")
     x = sp.find_all("entry", limit=15)
@@ -100,6 +108,7 @@ def parse_latest():
 
 
 def parse_random():
+    """random anime"""
     template = """
 <b>{}</b>
 
@@ -112,8 +121,8 @@ def parse_random():
     title = page.find("h2", class_="pt-5").text
     sinopse = page.find("div", class_="anime-description").text
     genres = " ".join(map(str, page.find("div", class_="anime-genres").text.split()))
-    if len(sinopse) > 1000:
-        sinopse = sinopse[:1000] + " ..."
+    if len(sinopse) > 800:
+        sinopse = sinopse[:800] + " ..."
     img = "https:" + page.find("img")["src"]
     return rand_anime, template.format(title, genres, sinopse), img
 
@@ -133,10 +142,12 @@ def time_formatter(seconds: float) -> str:
 
 
 def uptime():
+    """bot uptime"""
     return time_formatter(time.time() - start_time)
 
 
 async def scheduling():
+    """send new animes in chats"""
     glist = animes.find()
     async for chats in glist:
         if chats == None:
@@ -161,9 +172,9 @@ async def scheduling():
                     )
                     msg = f"<b>Novos episodios adicionados:</b>\n\n<i>✨ {string}</i>"
                     await Better.send_photo(chat_id=gid, photo=img, caption=msg, reply_markup=keyboard)
-                except (ChatIdInvalid, ChatWriteForbidden, ChannelInvalid, UserIsBlocked):
+                except (ChatIdInvalid, ChannelInvalid, UserIsBlocked):
                     await rm_chat(gid)
                     pass
-                except Exception:
+                except (Exception, ChatWriteForbidden):
                     pass
                 await asyncio.sleep(1)
