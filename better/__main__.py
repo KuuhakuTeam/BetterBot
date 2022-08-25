@@ -13,7 +13,7 @@ from pymongo.errors import ConnectionFailure
 
 from better import Better, db_core
 from better.config import *
-from better.database.data import scheduling
+from better.helpers.scheduler import scheduling_anime, scheduling_day_animes
 
 from pyrogram import idle
 
@@ -46,7 +46,8 @@ async def run_better():
 async def main():
     await db_connect()
     await run_better()
-    scheduler.add_job(scheduling, "interval", minutes=1, id='betterbot')
+    scheduler.add_job(scheduling_day_animes, 'cron', hour=11, id='beter_anime_day')
+    scheduler.add_job(scheduling_anime, "interval", minutes=1, id='better_scheduller')
     scheduler.start()
     await idle()
 

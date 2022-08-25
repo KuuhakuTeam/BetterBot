@@ -13,7 +13,13 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 
 from better import Better
 from better.config import TRIGGER, VERSION
-from better.database.data import find_chat, add_to_db, rm_chat, parse_latest, uptime, parse_random
+from better.helpers.data import find_chat, add_to_db, rm_chat, parse_latest, uptime, parse_random, parse_anime_day
+
+
+@Better.on_message(filters.command("agenda", TRIGGER))
+async def agenda_(_, message):
+    msg = parse_anime_day()
+    await message.reply(text=msg, disable_web_page_preview=True)
 
 
 @Better.on_message(filters.command("random", TRIGGER))

@@ -6,18 +6,16 @@
 # <https://www.github.com/KuuhakuTeam/BetterBot/blob/master/LICENSE/>.
 
 import time
-import asyncio
 import requests
 
 from bs4 import BeautifulSoup
+from datetime import date
 
-from pyrogram.errors import ChatIdInvalid, ChatWriteForbidden, ChannelInvalid, UserIsBlocked
-from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from pyrogram.enums import ChatType
 
 from better import Better, start_time
 from better.config import GP_LOGS
-from better.database import db
+from better.helpers import db
 
 
 animes = db["CHATS"]
@@ -127,6 +125,23 @@ def parse_random():
     return rand_anime, template.format(title, genres, sinopse), img
 
 
+def day_week():
+    data = date.today().weekday()
+    week_class = ("v-pills-seg-tab", "v-pills-ter-tab", "v-pills-qua-tab", "v-pills-qui-tab", "v-pills-sex-tab", "v-pills-sab-tab", "v-pills-dom-tab")
+    return {week_class[data]}
+
+
+def parse_anime_day():
+    req = requests.get("https://betteranime.net/").content
+    bs = BeautifulSoup(req, "html.parser")
+    x = bs.find("div", {"aria-labelledby": day_week()})
+    parser = x.find_all("div", class_="d-flex mb-4 pb-3")
+    msg = "<b>Animes em lançamento hoje:</b>\n\n"
+    for text in parser:
+        msg += f'• <b><a href="{text.find("a")["href"]}">{" ".join(text.find("div", class_="calendar-title").text.replace("Episódio Novo", "").split())}</a></b>\n- <i>{" ".join(text.find("div", class_="d-flex align-items-center calendar-hours").text.replace("Aprox.", "Aproximadamente").split())}</i>\n\n'
+    return msg
+
+
 def time_formatter(seconds: float) -> str:
     """time formating"""
     minutes, seconds = divmod(int(seconds), 60)
@@ -146,35 +161,3 @@ def uptime():
     return time_formatter(time.time() - start_time)
 
 
-async def scheduling():
-    """send new animes in chats"""
-    glist = animes.find()
-    async for chats in glist:
-        if chats == None:
-            return
-        else:
-            gid = chats["chat_id"]
-            link, string = parse_str()
-            if await find_ep(gid, string):
-                pass
-            else:
-                await add_ep(gid, string)
-                img = get_img(link)
-                try:
-                    keyboard = InlineKeyboardMarkup(
-                        [
-                            [
-                                InlineKeyboardButton(
-                                    text="Assistir", url=link
-                                )
-                            ],
-                        ]
-                    )
-                    msg = f"<b>Novos episodios adicionados:</b>\n\n<i>✨ {string}</i>"
-                    await Better.send_photo(chat_id=gid, photo=img, caption=msg, reply_markup=keyboard)
-                except (ChatIdInvalid, ChannelInvalid, UserIsBlocked):
-                    await rm_chat(gid)
-                    pass
-                except (Exception, ChatWriteForbidden):
-                    pass
-                await asyncio.sleep(1)
