@@ -54,7 +54,7 @@ async def scheduling_day_animes():
             return
         else:
             gid = chats["chat_id"]
-            msg = parse_anime_day()
+            msg = "<b>Ohayou minna san ✨</b>\n" + parse_anime_day()
             try:
                 await Better.send_message(chat_id=gid, text=msg, disable_web_page_preview=True)
             except (ChatIdInvalid, ChannelInvalid, UserIsBlocked):
