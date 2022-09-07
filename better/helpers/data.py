@@ -8,8 +8,9 @@
 import time
 import requests
 
-from bs4 import BeautifulSoup
 from datetime import date
+from bs4 import BeautifulSoup
+from feedparser import parse
 
 from pyrogram.enums import ChatType
 
@@ -21,10 +22,27 @@ from better.helpers import db
 animes = db["CHATS"]
 
 
-async def find_chat(gid: int):
+async def find_chat(id: int):
     """verify chat in db"""
-    if await animes.find_one({"chat_id": gid}):
+    if await animes.find_one({"chat_id": id}):
         return True
+
+
+async def verify(id: int):
+    """verify notification"""
+    if await find_chat(id):
+        x = await animes.find_one({"chat_id": id})
+        if x["notification"] == "on":
+            return True
+        else:
+            return False
+    else:
+        return False
+
+
+async def turn(id: int, typ: str):
+    """turn on/off notifications"""
+    await animes.update_one({"chat_id": id}, {"$set": {"notification": typ}}, upsert=True)
 
 
 async def add_to_db(m):
@@ -33,19 +51,21 @@ async def add_to_db(m):
         user = await Better.get_users(m.from_user.id)
         msg = f"#Better #New_User\n\n<b>User:</b> {user.mention}\n<b>ID:</b> {user.id}"
         if user.username:
-            msg += f"\n<b>Username:</b> {user.username}"
+            msg += f"\n<b>Username:</b> @{user.username}"
         type = "user"
     elif m.chat.type == ChatType.SUPERGROUP or ChatType.GROUP:
-        x = await Better.get_chat(m.chat.id)
-        msg = f"#Better #New_Group\n\n<b>Group</b>: {x.title}\n<b>ID:</b> {x.id}"
+        gp = await Better.get_chat(m.chat.id)
+        msg = f"#Better #New_Group\n\n<b>Group</b>: {gp.title}\n<b>ID:</b> {gp.id}"
+        if gp.username:
+            msg += f"\n<b>Username:</b> @{gp.username}"
         type = "group"
-    await animes.update_one({"chat_id": m.chat.id}, {"$set": {"type": type}}, upsert=True)
+    await animes.update_one({"chat_id": m.chat.id}, {"$set": {"type": type, "notification": "on"}}, upsert=True)
     await Better.send_message(GP_LOGS, msg)
 
 
-async def find_ep(gid: int, string: str):
+async def find_ep(id: int, string: str):
     """verify episode in chat db"""
-    x = await animes.find_one({"chat_id": gid})
+    x = await animes.find_one({"chat_id": id})
     if x:
         try:
             st = x["string"]
@@ -57,16 +77,16 @@ async def find_ep(gid: int, string: str):
     return False
 
 
-async def add_ep(gid: int, string: str):
+async def add_ep(id: int, string: str):
     """add ep to chat db"""
     await animes.update_one(
-        {"chat_id": gid}, {"$set": {"string": string}}, upsert=True
+        {"chat_id": id}, {"$set": {"string": string}}, upsert=True
     )
 
 
-async def rm_chat(gid: int):
+async def rm_chat(id: int):
     """remove chat to db"""
-    await animes.delete_one({"chat_id": gid})
+    await animes.delete_one({"chat_id": id})
 
 
 def get_img(link):
@@ -84,24 +104,21 @@ def get_img(link):
 
 def parse_str():
     """get latest anime"""
-    req = requests.get("https://betteranime.net/lancamentos-rss")
-    sp = BeautifulSoup(req.content, "html.parser")
-    x = sp.find("entry")
-    title = x.find("summary")
-    link = x.find("link")["href"]
-    return link, title.contents[1]
+    req = parse("https://betteranime.net/lancamentos-rss")
+    title = req["entries"][0]["title"]
+    link = req["entries"][0]["link"]
+    return link, title
 
 
 def parse_latest():
-    """get latest 15 animes"""
-    req = requests.get("https://betteranime.net/lancamentos-rss")
-    sp = BeautifulSoup(req.content, "html.parser")
-    x = sp.find_all("entry", limit=15)
+    """get latest 20 animes"""
+    req = parse("https://betteranime.net/lancamentos-rss")
+    all_entry = req["entries"]
     msg = "<b>Ultimos animes adicionados:</b>\n\n"
-    for anim in x:
-        title = anim.find("summary")
-        link = anim.find("link")["href"]
-        msg += f'• <i><a href="{link}">{title.contents[1]}</a></i>\n'
+    for anim in all_entry:
+        title = anim["title"]
+        link = anim["link"]
+        msg += f'• <i><a href="{link}">{title}</a></i>\n'
     return msg
 
 

@@ -8,12 +8,50 @@
 from datetime import datetime
 
 from pyrogram import filters
-from pyrogram.enums import ChatType
+from pyrogram.enums import ChatType, ChatMemberStatus
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 
 from better import Better
-from better.config import TRIGGER, VERSION
-from better.helpers.data import find_chat, add_to_db, rm_chat, parse_latest, uptime, parse_random, parse_anime_day
+from better.config import DEV, TRIGGER, VERSION
+from better.helpers.data import *
+
+
+@Better.on_message(filters.command("on", TRIGGER))
+async def on_(_, message):
+    if message.chat.type == ChatType.SUPERGROUP or ChatType.GROUP:
+        if not await check_rights(message.chat.id, message.from_user.id):
+            return await message.reply("<i>Você precisa ser administrador para fazer isso.</i>")
+        if not await verify(message.chat.id):
+            await turn(message.chat.id, "on")
+            return await message.reply("<i>Pronto, agora quando novos animes forem lançados eu notificarei vocês.</i>")
+        await message.reply("<i>Oni-san, este grupo já está em minha lista de notificações.</i>")
+    elif message.chat.type == ChatType.PRIVATE:
+        if not await verify(message.chat.id):
+            await turn(message.chat.id, "on")
+            return await message.reply("<i>Pronto, agora quando novos animes forem lançados eu notificarei você.</i>")
+        await message.reply("<i>Oni-san, você já está em minha lista de notificações.</i>")
+    else:
+        return
+
+
+@Better.on_message(filters.command("off", TRIGGER))
+async def stoping(_, message):
+    if message.chat.type == ChatType.SUPERGROUP or ChatType.GROUP:
+        if not await check_rights(message.chat.id, message.from_user.id):
+            return await message.reply("<i>Você precisa ser administrador para fazer isso.</i>")
+        if await verify(message.chat.id):
+            await turn(message.chat.id, "off")
+            await message.reply("<i>Ok, não vou mais enviar animes aqui.</i>")
+        else:
+            await message.reply("<i>Oni-san, este grupo não está em minha lista de notificações. Para ativar digite /on .</i>")
+    elif message.chat.type == ChatType.PRIVATE:
+        if await verify(message.chat.id):
+            await turn(message.chat.id, "off")
+            await message.reply("<i>Ok, não vou mais enviar animes aqui.</i>")
+        else:
+            await message.reply("<i>Oni-san, você não está em minha lista de notificações. Para ativar digite /on .</i>")
+    else:
+        return
 
 
 @Better.on_message(filters.command("agenda", TRIGGER))
@@ -114,3 +152,16 @@ async def thanks_for(_, m: Message):
     if m.chat.type == ChatType.GROUP or ChatType.SUPERGROUP or ChatType.PRIVATE:
         if not await find_chat(m.chat.id):
             await add_to_db(m)
+
+
+async def check_rights(chat_id: int, user_id: int) -> bool:
+    """check admin"""
+    user = await Better.get_chat_member(chat_id, user_id)
+    if user_id in DEV:
+        return True
+    if user.status == ChatMemberStatus.MEMBER:
+        return False
+    elif user.status == ChatMemberStatus.OWNER or ChatMemberStatus.ADMINISTRATOR:
+        return True
+    else:
+        return False

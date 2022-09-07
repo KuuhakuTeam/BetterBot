@@ -7,6 +7,8 @@
 
 import asyncio
 
+from requests.exceptions import ConnectionError
+
 from pyrogram.errors import ChatIdInvalid, ChatWriteForbidden, ChannelInvalid, UserIsBlocked
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
@@ -19,31 +21,37 @@ async def scheduling_anime():
         if chats == None:
             return
         else:
-            gid = chats["chat_id"]
-            link, string = parse_str()
-            if await find_ep(gid, string):
-                pass
-            else:
-                await add_ep(gid, string)
-                img = get_img(link)
+            id = chats["chat_id"]
+            if await verify(id):
                 try:
-                    keyboard = InlineKeyboardMarkup(
-                        [
-                            [
-                                InlineKeyboardButton(
-                                    text="Assistir", url=link
-                                )
-                            ],
-                        ]
-                    )
-                    msg = f"<b>Novos episodios adicionados:</b>\n\n<i>✨ {string}</i>"
-                    await Better.send_photo(chat_id=gid, photo=img, caption=msg, reply_markup=keyboard)
-                except (ChatIdInvalid, ChannelInvalid, UserIsBlocked):
-                    await rm_chat(gid)
+                    link, string = parse_str()
+                    if await find_ep(id, string):
+                        pass
+                    else:
+                        await add_ep(id, string)
+                        img = get_img(link)
+                        try:
+                            keyboard = InlineKeyboardMarkup(
+                                [
+                                    [
+                                        InlineKeyboardButton(
+                                            text="Assistir", url=link
+                                        )
+                                    ],
+                                ]
+                            )
+                            msg = f"<b>Novos episodios adicionados:</b>\n\n<i>✨ {string}</i>"
+                            await Better.send_photo(chat_id=id, photo=img, caption=msg, reply_markup=keyboard)
+                        except (ChatIdInvalid, ChannelInvalid, UserIsBlocked):
+                            await rm_chat(id)
+                            pass
+                        except (Exception, ChatWriteForbidden):
+                            pass
+                        await asyncio.sleep(1)
+                except ConnectionError:
                     pass
-                except (Exception, ChatWriteForbidden):
-                    pass
-                await asyncio.sleep(1)
+            else:
+                pass
 
 
 async def scheduling_day_animes():
@@ -53,13 +61,16 @@ async def scheduling_day_animes():
         if chats == None:
             return
         else:
-            gid = chats["chat_id"]
-            msg = "<b>Ohayou minna san ✨</b>\n" + parse_anime_day()
-            try:
-                await Better.send_message(chat_id=gid, text=msg, disable_web_page_preview=True)
-            except (ChatIdInvalid, ChannelInvalid, UserIsBlocked):
-                await rm_chat(gid)
+            id = chats["chat_id"]
+            if await verify(id):
+                msg = "<b>Ohayou minna san ✨</b>\n" + parse_anime_day()
+                try:
+                    await Better.send_message(chat_id=id, text=msg, disable_web_page_preview=True)
+                except (ChatIdInvalid, ChannelInvalid, UserIsBlocked):
+                    await rm_chat(id)
+                    pass
+                except (Exception, ChatWriteForbidden):
+                    pass
+                await asyncio.sleep(1)
+            else:
                 pass
-            except (Exception, ChatWriteForbidden):
-                pass
-            await asyncio.sleep(1)

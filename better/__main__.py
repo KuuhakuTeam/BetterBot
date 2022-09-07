@@ -47,7 +47,7 @@ async def main():
     await db_connect()
     await run_better()
     scheduler.add_job(scheduling_day_animes, 'cron', hour=11, id='beter_anime_day')
-    scheduler.add_job(scheduling_anime, "interval", minutes=1, id='better_scheduller')
+    scheduler.add_job(scheduling_anime, "interval", minutes=2, id='better_scheduller')
     scheduler.start()
     await idle()
 
