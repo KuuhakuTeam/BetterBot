@@ -14,6 +14,7 @@ from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 from .data import *
 
+
 async def scheduling_anime():
     """send new animes in chats"""
     glist = animes.find()
@@ -24,6 +25,7 @@ async def scheduling_anime():
             id = chats["chat_id"]
             if await verify(id):
                 try:
+                    
                     link, string = parse_str()
                     if await find_ep(id, string):
                         pass
@@ -48,7 +50,8 @@ async def scheduling_anime():
                         except (Exception, ChatWriteForbidden):
                             pass
                         await asyncio.sleep(1)
-                except ConnectionError:
+                except ConnectionError or IndexError:
+                    print("\n===== ERR =====\n")
                     pass
             else:
                 pass
