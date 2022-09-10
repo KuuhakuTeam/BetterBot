@@ -144,7 +144,7 @@ def parse_random():
 
 def day_week():
     data = date.today().weekday()
-    week_class = ("v-pills-seg-tab", "v-pills-ter-tab", "v-pills-qua-tab", "v-pills-qui-tab", "v-pills-sex-tab", "v-pills-sab-tab", "v-pills-dom-tab")
+    week_class = ("v-pills-seg-tab", "v-pills-ter-tab", "v-pills-qua-tab", "v-pills-qui-tab", "v-pills-sex-tab", "v-pills-sáb-tab", "v-pills-dom-tab")
     return {week_class[data]}
 
 
