@@ -50,8 +50,7 @@ async def scheduling_anime():
                         except (Exception, ChatWriteForbidden):
                             pass
                         await asyncio.sleep(1)
-                except ConnectionError or IndexError:
-                    print("\n===== ERR =====\n")
+                except ConnectionError or IndexError or AttributeError:
                     pass
             else:
                 pass
