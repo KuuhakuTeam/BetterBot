@@ -5,6 +5,8 @@
 # PLease read the GNU v3.0 License Agreement in 
 # <https://www.github.com/KuuhakuTeam/BetterBot/blob/master/LICENSE/>.
 
+import asyncio
+
 from datetime import datetime
 
 from pyrogram import filters
@@ -16,16 +18,65 @@ from better.config import DEV, TRIGGER, VERSION
 from better.helpers.data import *
 
 
+@Better.on_message(filters.command("anime", TRIGGER))
+async def anime_search(_, message):
+    query = " ".join(message.text.split()[1:])
+    if not query:
+        return await message.reply("<i>Você precisa inserir o nome de algum anime</i>")
+    url = f'https://betteranime.net/pesquisa?titulo={query.replace(" ", "+")}&searchTerm={query.replace(" ", "+")}'
+    req = requests.get(url).content
+    try:
+        soup = BeautifulSoup(req, "html.parser")
+        sp = soup.find("article", class_="col-xl-2 col-lg-3 col-md-3 col-sm-4 col-6")
+        link = sp.find("a")["href"]
+        msg, img = get_info(link)
+        keyboard = InlineKeyboardMarkup(
+            [
+                [
+                    InlineKeyboardButton(
+                        text="Ver no site", url=link,
+                    ),
+                ],
+                [
+                    InlineKeyboardButton(
+                        text="Mais Resultados", url=url,
+                    ),
+                ]
+            ]
+        )
+        await message.reply_photo(photo=img, caption=msg, reply_markup=keyboard)
+    except AttributeError:
+        await message.reply(f"<i>Não consegui encontrar nenhum anime com esse nome.</i>")
+
+
+@Better.on_message(filters.command("stats", TRIGGER))
+async def count_users(_, message):
+    glist = animes.find()
+    groups, users = 0, 0
+    async for i in glist:
+        if i.get("type") == "user":
+            users = users + 1
+        else:
+            groups = groups + 1
+    await message.reply(f"<i>Oni-san, atualmente eu notifico {users} Usuarios e {groups} Grupos.</i>")
+
+
 @Better.on_message(filters.command("on", TRIGGER))
 async def on_(_, message):
     if message.chat.type == ChatType.SUPERGROUP or ChatType.GROUP:
         if not await check_rights(message.chat.id, message.from_user.id):
             return await message.reply("<i>Você precisa ser administrador para fazer isso.</i>")
+        if not await find_chat(message.chat.id):
+            await add_to_db(message)
+            await asyncio.sleep(1)
         if not await verify(message.chat.id):
             await turn(message.chat.id, "on")
             return await message.reply("<i>Pronto, agora quando novos animes forem lançados eu notificarei vocês.</i>")
         await message.reply("<i>Oni-san, este grupo já está em minha lista de notificações.</i>")
     elif message.chat.type == ChatType.PRIVATE:
+        if not await find_chat(message.chat.id):
+            await add_to_db(message)
+            await asyncio.sleep(1)
         if not await verify(message.chat.id):
             await turn(message.chat.id, "on")
             return await message.reply("<i>Pronto, agora quando novos animes forem lançados eu notificarei você.</i>")
@@ -39,12 +90,18 @@ async def stoping(_, message):
     if message.chat.type == ChatType.SUPERGROUP or ChatType.GROUP:
         if not await check_rights(message.chat.id, message.from_user.id):
             return await message.reply("<i>Você precisa ser administrador para fazer isso.</i>")
+        if not await find_chat(message.chat.id):
+            await add_to_db(message)
+            await asyncio.sleep(1)
         if await verify(message.chat.id):
             await turn(message.chat.id, "off")
             await message.reply("<i>Ok, não vou mais enviar animes aqui.</i>")
         else:
             await message.reply("<i>Oni-san, este grupo não está em minha lista de notificações. Para ativar digite /on .</i>")
     elif message.chat.type == ChatType.PRIVATE:
+        if not await find_chat(message.chat.id):
+            await add_to_db(message)
+            await asyncio.sleep(1)
         if await verify(message.chat.id):
             await turn(message.chat.id, "off")
             await message.reply("<i>Ok, não vou mais enviar animes aqui.</i>")
@@ -62,18 +119,21 @@ async def agenda_(_, message):
 
 @Better.on_message(filters.command("random", TRIGGER))
 async def about_(_, message):
-    link, msg, img = parse_random()
-    keyboard = InlineKeyboardMarkup(
-        [
+    try:
+        rand_anime = requests.get("https://betteranime.net/random").url
+        msg, img = get_info(rand_anime)
+        keyboard = InlineKeyboardMarkup(
             [
-                InlineKeyboardButton(
-                    text="Ver no site", url=link,
-                ),
-            ],
-        ]
-    )
-    await message.reply_photo(photo=img, caption=msg, reply_markup=keyboard)
-
+                [
+                    InlineKeyboardButton(
+                        text="Ver no site", url=rand_anime,
+                    ),
+                ],
+            ]
+        )
+        await message.reply_photo(photo=img, caption=msg, reply_markup=keyboard)
+    except AttributeError:
+        await message.reply(f"<i>Não consegui encontrar nenhum anime com esse nome.</i>")
 
 @Better.on_message(filters.command("ping", TRIGGER))
 async def ping_(_, message):

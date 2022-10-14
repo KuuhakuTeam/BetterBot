@@ -122,16 +122,14 @@ def parse_latest():
     return msg
 
 
-def parse_random():
-    """random anime"""
+def get_info(url: str):
     template = """
 <b>{}</b>
 
 <b>Gêneros:</b> {}
 <code>{}</code>
     """
-    rand_anime = requests.get("https://betteranime.net/random").url
-    req = requests.get(rand_anime).content
+    req = requests.get(url).content
     page = BeautifulSoup(req, "html.parser").find("main", class_="container d-flex my-5")
     title = page.find("h2", class_="pt-5").text
     sinopse = page.find("div", class_="anime-description").text
@@ -139,7 +137,7 @@ def parse_random():
     if len(sinopse) > 800:
         sinopse = sinopse[:800] + " ..."
     img = "https:" + page.find("img")["src"]
-    return rand_anime, template.format(title, genres, sinopse), img
+    return template.format(title, genres, sinopse), img
 
 
 def day_week():
