@@ -2,7 +2,7 @@
 # Copyright (C) 2022 KuuhakuTeam
 #
 # This file is a part of < https://github.com/KuuhakuTeam/BetterBot/ >
-# PLease read the GNU v3.0 License Agreement in 
+# PLease read the GNU v3.0 License Agreement in
 # <https://www.github.com/KuuhakuTeam/BetterBot/blob/master/LICENSE/>.
 
 import asyncio
@@ -14,7 +14,7 @@ from pyrogram.enums import ChatType, ChatMemberStatus
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message
 
 from better import Better
-from better.config import DEV, TRIGGER, VERSION
+from better.config import DEV, TRIGGER
 from better.helpers.data import *
 
 
@@ -34,19 +34,23 @@ async def anime_search(_, message):
             [
                 [
                     InlineKeyboardButton(
-                        text="Ver no site", url=link,
+                        text="Ver no site",
+                        url=link,
                     ),
                 ],
                 [
                     InlineKeyboardButton(
-                        text="Mais Resultados", url=url,
+                        text="Mais Resultados",
+                        url=url,
                     ),
-                ]
+                ],
             ]
         )
         await message.reply_photo(photo=img, caption=msg, reply_markup=keyboard)
     except AttributeError:
-        await message.reply(f"<i>Não consegui encontrar nenhum anime com esse nome.</i>")
+        await message.reply(
+            f"<i>Não consegui encontrar nenhum anime com esse nome.</i>"
+        )
 
 
 @Better.on_message(filters.command("stats", TRIGGER))
@@ -58,29 +62,41 @@ async def count_users(_, message):
             users = users + 1
         else:
             groups = groups + 1
-    await message.reply(f"<i>Oni-san, atualmente eu notifico {users} Usuarios e {groups} Grupos.</i>")
+    await message.reply(
+        f"<i>Oni-san, atualmente eu notifico {users} Usuarios e {groups} Grupos.</i>"
+    )
 
 
 @Better.on_message(filters.command("on", TRIGGER))
 async def on_(_, message):
     if message.chat.type == ChatType.SUPERGROUP or ChatType.GROUP:
         if not await check_rights(message.chat.id, message.from_user.id):
-            return await message.reply("<i>Você precisa ser administrador para fazer isso.</i>")
+            return await message.reply(
+                "<i>Você precisa ser administrador para fazer isso.</i>"
+            )
         if not await find_chat(message.chat.id):
             await add_to_db(message)
             await asyncio.sleep(1)
         if not await verify(message.chat.id):
             await turn(message.chat.id, "on")
-            return await message.reply("<i>Pronto, agora quando novos animes forem lançados eu notificarei vocês.</i>")
-        await message.reply("<i>Oni-san, este grupo já está em minha lista de notificações.</i>")
+            return await message.reply(
+                "<i>Pronto, agora quando novos animes forem lançados eu notificarei vocês.</i>"
+            )
+        await message.reply(
+            "<i>Oni-san, este grupo já está em minha lista de notificações.</i>"
+        )
     elif message.chat.type == ChatType.PRIVATE:
         if not await find_chat(message.chat.id):
             await add_to_db(message)
             await asyncio.sleep(1)
         if not await verify(message.chat.id):
             await turn(message.chat.id, "on")
-            return await message.reply("<i>Pronto, agora quando novos animes forem lançados eu notificarei você.</i>")
-        await message.reply("<i>Oni-san, você já está em minha lista de notificações.</i>")
+            return await message.reply(
+                "<i>Pronto, agora quando novos animes forem lançados eu notificarei você.</i>"
+            )
+        await message.reply(
+            "<i>Oni-san, você já está em minha lista de notificações.</i>"
+        )
     else:
         return
 
@@ -89,7 +105,9 @@ async def on_(_, message):
 async def stoping(_, message):
     if message.chat.type == ChatType.SUPERGROUP or ChatType.GROUP:
         if not await check_rights(message.chat.id, message.from_user.id):
-            return await message.reply("<i>Você precisa ser administrador para fazer isso.</i>")
+            return await message.reply(
+                "<i>Você precisa ser administrador para fazer isso.</i>"
+            )
         if not await find_chat(message.chat.id):
             await add_to_db(message)
             await asyncio.sleep(1)
@@ -97,7 +115,9 @@ async def stoping(_, message):
             await turn(message.chat.id, "off")
             await message.reply("<i>Ok, não vou mais enviar animes aqui.</i>")
         else:
-            await message.reply("<i>Oni-san, este grupo não está em minha lista de notificações. Para ativar digite /on .</i>")
+            await message.reply(
+                "<i>Oni-san, este grupo não está em minha lista de notificações. Para ativar digite /on .</i>"
+            )
     elif message.chat.type == ChatType.PRIVATE:
         if not await find_chat(message.chat.id):
             await add_to_db(message)
@@ -106,7 +126,9 @@ async def stoping(_, message):
             await turn(message.chat.id, "off")
             await message.reply("<i>Ok, não vou mais enviar animes aqui.</i>")
         else:
-            await message.reply("<i>Oni-san, você não está em minha lista de notificações. Para ativar digite /on .</i>")
+            await message.reply(
+                "<i>Oni-san, você não está em minha lista de notificações. Para ativar digite /on .</i>"
+            )
     else:
         return
 
@@ -126,14 +148,18 @@ async def about_(_, message):
             [
                 [
                     InlineKeyboardButton(
-                        text="Ver no site", url=rand_anime,
+                        text="Ver no site",
+                        url=rand_anime,
                     ),
                 ],
             ]
         )
         await message.reply_photo(photo=img, caption=msg, reply_markup=keyboard)
     except AttributeError:
-        await message.reply(f"<i>Não consegui encontrar nenhum anime com esse nome.</i>")
+        await message.reply(
+            f"<i>Não consegui encontrar nenhum anime com esse nome.</i>"
+        )
+
 
 @Better.on_message(filters.command("ping", TRIGGER))
 async def ping_(_, message):
@@ -146,7 +172,14 @@ async def ping_(_, message):
 
 @Better.on_message(filters.command("latest", TRIGGER))
 async def latest_animes(_, message):
-    msg = parse_latest()
+    """get latest 20 animes"""
+    req = parse("https://betteranime.net/lancamentos-rss")
+    all_entry = req["entries"]
+    msg = "<b>Ultimos animes adicionados:</b>\n\n"
+    for anim in all_entry:
+        title = anim["title"]
+        link = anim["link"]
+        msg += f'• <i><a href="{link}">{title}</a></i>\n'
     await message.reply(msg)
 
 
@@ -159,30 +192,27 @@ async def start_(_, message):
         [
             [
                 InlineKeyboardButton(
-                    text="Adicionar a um Grupo", url=f"https://t.me/{me.username}?startgroup=new",
+                    text="Adicionar a um Grupo",
+                    url=f"https://t.me/{me.username}?startgroup=new",
                 ),
             ],
         ]
     )
     if message.chat.type == ChatType.PRIVATE:
-        await message.reply("Olá, sou apenas um bot que notifica quando um episodio é adicionado ao site BetterAnime.net. Eu te avisarei aqui quando novos animes forem adicionados e você tambem pode me adicionar á um grupo se desejar.", reply_markup=keyboard)
+        await message.reply(
+            "<i>Olá, sou apenas um bot que notifica quando um episodio é adicionado ao site BetterAnime.net. Eu te avisarei aqui quando novos animes forem adicionados e você tambem pode me adicionar á um grupo se desejar.</i>",
+            reply_markup=keyboard,
+        )
     else:
         return
 
 
 @Better.on_message(filters.command(["about", "repo"], TRIGGER))
 async def about_(_, message):
-    keyboard = InlineKeyboardMarkup(
-        [
-            [
-                InlineKeyboardButton(
-                    text="Repositorio", url="https://github.com/KuuhakuTeam/BetterBot",
-                ),
-            ],
-        ]
-    )
     if message.chat.type == ChatType.PRIVATE:
-        await message.reply_photo(photo="https://telegra.ph/file/a6b8f14854ada59ad1e8e.jpg", caption=f"<b>Versão: {VERSION}</b>", reply_markup=keyboard)
+        await message.reply(
+            '<i><a href="https://github.com/KuuhakuTeam/BetterBot">Repositorio</a></i>'
+        )
     else:
         return
 
@@ -212,6 +242,8 @@ async def thanks_for(_, m: Message):
     if m.chat.type == ChatType.GROUP or ChatType.SUPERGROUP or ChatType.PRIVATE:
         if not await find_chat(m.chat.id):
             await add_to_db(m)
+        else:
+            pass
 
 
 async def check_rights(chat_id: int, user_id: int) -> bool:

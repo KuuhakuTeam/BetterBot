@@ -10,7 +10,6 @@ import requests
 
 from datetime import date
 from bs4 import BeautifulSoup
-from feedparser import parse
 
 from pyrogram.enums import ChatType
 
@@ -100,26 +99,6 @@ def get_img(link):
     all_ = sp2.find("div", class_="infos-img text-center")
     get_img = all_.find("img")
     return str("https:" + get_img["src"])
-
-
-def parse_str():
-    """get latest anime"""
-    req = parse("https://betteranime.net/lancamentos-rss")
-    title = req["entries"][0]["title"]
-    link = req["entries"][0]["link"]
-    return link, title
-
-
-def parse_latest():
-    """get latest 20 animes"""
-    req = parse("https://betteranime.net/lancamentos-rss")
-    all_entry = req["entries"]
-    msg = "<b>Ultimos animes adicionados:</b>\n\n"
-    for anim in all_entry:
-        title = anim["title"]
-        link = anim["link"]
-        msg += f'• <i><a href="{link}">{title}</a></i>\n'
-    return msg
 
 
 def get_info(url: str):

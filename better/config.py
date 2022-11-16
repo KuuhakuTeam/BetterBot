@@ -2,7 +2,7 @@
 # Copyright (C) 2022 KuuhakuTeam
 #
 # This file is a part of < https://github.com/KuuhakuTeam/BetterBot/ >
-# PLease read the GNU v3.0 License Agreement in 
+# PLease read the GNU v3.0 License Agreement in
 # <https://www.github.com/KuuhakuTeam/BetterBot/blob/master/LICENSE/>.
 
 import os
@@ -17,5 +17,5 @@ BOT_TOKEN = os.environ.get("BOT_TOKEN")
 GP_LOGS = int(os.environ.get("GP_LOGS"))
 DATABASE_URL = os.environ.get("DATABASE_URL")
 TRIGGER = os.environ.get("TRIGGER", "/ ! . :".split())
-VERSION = "v1.0.4"
+VERSION = "v1.0.5"
 DEV = [838926101]

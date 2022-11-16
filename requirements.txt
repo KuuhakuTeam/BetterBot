@@ -4,3 +4,5 @@ python-dotenv
 requests
 pymongo
 dnspython
+feedparser
+bs4
