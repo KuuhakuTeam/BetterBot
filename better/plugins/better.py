@@ -8,6 +8,7 @@
 import asyncio
 
 from datetime import datetime
+from feedparser import parse
 
 from pyrogram import filters
 from pyrogram.enums import ChatType, ChatMemberStatus
